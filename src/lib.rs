@@ -1,26 +1,35 @@
-pub fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
-    let mut results = Vec::new();
+pub mod cli;
+mod search;
 
-    for line in contents.lines() {
-        if line.contains(query) {
-            results.push(line);
+use cli::{Command, Config};
+use std::error::Error;
+use std::fs;
+
+pub use search::{search, search_case_insensitive};
+
+pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
+    match config.command {
+        Command::Search { query, file_path } => {
+            let contents = fs::read_to_string(file_path)?;
+
+            let results = if config.ignore_case {
+                search_case_insensitive(&query, &contents)
+            } else {
+                search(&query, &contents)
+            };
+
+            for line in results {
+                println!("{line}");
+            }
+        }
+
+        Command::Show { file_path } => {
+            let contents = fs::read_to_string(file_path)?;
+            print!("{contents}");
         }
     }
 
-    results
-}
-
-pub fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
-    let query = query.to_lowercase();
-    let mut results = Vec::new();
-
-    for line in contents.lines() {
-        if line.to_lowercase().contains(&query) {
-            results.push(line);
-        }
-    }
-
-    results
+    Ok(())
 }
 
 #[cfg(test)]
