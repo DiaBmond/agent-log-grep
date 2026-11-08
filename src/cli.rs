@@ -49,3 +49,87 @@ impl Config {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_search_command() {
+        let args = vec![
+            "agent-log-grep".to_string(),
+            "search".to_string(),
+            "error".to_string(),
+            "log.jsonl".to_string(),
+        ];
+
+        let config = Config::build(&args).unwrap();
+
+        match config.command {
+            Command::Search { query, file_path } => {
+                assert_eq!(query, "error");
+                assert_eq!(file_path, "log.jsonl");
+            }
+            _ => panic!("Expected Search command"),
+        }
+    }
+
+    #[test]
+    fn parse_show_command() {
+        let args = vec![
+            "agent-log-grep".to_string(),
+            "show".to_string(),
+            "log.jsonl".to_string(),
+        ];
+
+        let config = Config::build(&args).unwrap();
+
+        match config.command {
+            Command::Show { file_path } => {
+                assert_eq!(file_path, "log.jsonl");
+            }
+            _ => panic!("Expected Show command"),
+        }
+    }
+
+    #[test]
+    fn reject_missing_command() {
+        let args = vec!["agent-log-grep".to_string()];
+
+        assert!(Config::build(&args).is_err());
+    }
+
+    #[test]
+    fn reject_unknown_command() {
+        let args = vec![
+            "agent-log-grep".to_string(),
+            "delete".to_string(),
+            "log.jsonl".to_string(),
+        ];
+
+        assert!(Config::build(&args).is_err());
+    }
+
+    #[test]
+    fn reject_invalid_search_arguments() {
+        let args = vec![
+            "agent-log-grep".to_string(),
+            "search".to_string(),
+            "error".to_string(),
+        ];
+
+        assert!(Config::build(&args).is_err());
+    }
+
+    #[test]
+    fn reject_extra_show_arguments() {
+        let args = vec![
+            "agent-log-grep".to_string(),
+            "show".to_string(),
+            "a.jsonl".to_string(),
+            "b.jsonl".to_string(),
+        ];
+
+        assert!(Config::build(&args).is_err());
+    }
+}
