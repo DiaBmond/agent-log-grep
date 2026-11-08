@@ -24,35 +24,67 @@ pub fn search_case_insensitive<'a>(query: &str, records: &'a Vec<LogRecord>) -> 
 
     results
 }
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
+    #[test]
+    fn case_sensitive() {
+        let query = "duct";
 
-//     #[test]
-//     fn case_sensitive() {
-//         let query = "duct";
-//         let contents = "\
-// Rust:
-// safe, fast, productive.
-// Pick three.
-// Duct tape.";
+        let records = vec![
+            LogRecord {
+                line_number: 1,
+                raw: String::from("Rust:"),
+            },
+            LogRecord {
+                line_number: 2,
+                raw: String::from("safe, fast, productive."),
+            },
+            LogRecord {
+                line_number: 3,
+                raw: String::from("Pick three."),
+            },
+            LogRecord {
+                line_number: 4,
+                raw: String::from("Duct tape."),
+            },
+        ];
 
-//         assert_eq!(vec!["safe, fast, productive."], search(query, contents));
-//     }
+        let results = search(query, &records);
 
-//     #[test]
-//     fn case_insensitive() {
-//         let query = "rUsT";
-//         let contents = "\
-// Rust:
-// safe, fast, productive.
-// Pick three.
-// Trust me.";
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].line_number, 2);
+        assert_eq!(results[0].raw, "safe, fast, productive.");
+    }
 
-//         assert_eq!(
-//             vec!["Rust:", "Trust me."],
-//             search_case_insensitive(query, contents)
-//         );
-//     }
-// }
+    #[test]
+    fn case_insensitive() {
+        let query = "rUsT";
+
+        let records = vec![
+            LogRecord {
+                line_number: 1,
+                raw: String::from("Rust:"),
+            },
+            LogRecord {
+                line_number: 2,
+                raw: String::from("safe, fast, productive."),
+            },
+            LogRecord {
+                line_number: 3,
+                raw: String::from("Pick three."),
+            },
+            LogRecord {
+                line_number: 4,
+                raw: String::from("Trust me."),
+            },
+        ];
+
+        let results = search_case_insensitive(query, &records);
+
+        assert_eq!(results.len(), 2);
+        assert_eq!(results[0].raw, "Rust:");
+        assert_eq!(results[1].raw, "Trust me.");
+    }
+}
