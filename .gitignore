@@ -34,3 +34,5 @@ rustc-ice-*.txt
 
 # Program output
 /output.txt
+
+/sample

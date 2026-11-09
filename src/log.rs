@@ -1,13 +1,14 @@
 use std::error::Error;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use std::path::Path;
 
 pub struct LogRecord {
     pub line_number: usize,
     pub raw: String,
 }
 
-pub fn read_logs(file_path: &str) -> Result<Vec<LogRecord>, Box<dyn Error>> {
+pub fn read_logs(file_path: &Path) -> Result<Vec<LogRecord>, Box<dyn Error>> {
     let file = File::open(file_path)?;
     let reader = BufReader::new(file);
 
@@ -54,7 +55,7 @@ mod tests {
 
         fs::write(&path, "first line\nsecond line\nthird line\n").unwrap();
 
-        let records = read_logs(path.to_str().unwrap()).unwrap();
+        let records = read_logs(&path).unwrap();
 
         assert_eq!(records.len(), 3);
 
@@ -76,7 +77,7 @@ mod tests {
 
         fs::write(&path, "").unwrap();
 
-        let records = read_logs(path.to_str().unwrap()).unwrap();
+        let records = read_logs(&path).unwrap();
 
         assert!(records.is_empty());
 
@@ -87,8 +88,7 @@ mod tests {
     fn read_nonexistent_file() {
         let path = temp_path("nonexistent");
 
-        let result = read_logs(path.to_str().unwrap());
-
+        let result = read_logs(&path);
         assert!(result.is_err());
     }
 }

@@ -2,7 +2,10 @@ use std::env;
 use std::fs;
 use std::path::PathBuf;
 use std::process::{Command, Output};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
+
+static NEXT_ID: AtomicUsize = AtomicUsize::new(0);
 
 fn create_test_log(contents: &str) -> PathBuf {
     let timestamp = SystemTime::now()
@@ -10,8 +13,10 @@ fn create_test_log(contents: &str) -> PathBuf {
         .unwrap()
         .as_nanos();
 
+    let id = NEXT_ID.fetch_add(1, Ordering::Relaxed);
+
     let path = env::temp_dir().join(format!(
-        "agent-log-grep-{}-{timestamp}.jsonl",
+        "agent-log-grep-{}-{timestamp}-{id}.jsonl",
         std::process::id()
     ));
 
