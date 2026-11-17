@@ -5,7 +5,6 @@ mod search;
 
 use cli::{Command, Config};
 use files::collect_files;
-use log::read_logs;
 use std::error::Error;
 use std::path::Path;
 
@@ -20,19 +19,17 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
             let files = collect_files(path)?;
 
             for file in files {
-                let records = read_logs(&file)?;
+                let records = log::stream_logs(&file)?;
 
-                let results = if config.ignore_case {
-                    search_case_insensitive(&query, &records)
-                } else {
-                    search(&query, &records)
-                };
+                for record in records {
+                    let record = record?;
 
-                for record in results {
-                    if is_directory {
-                        println!("{}:{}: {}", file.display(), record.line_number, record.raw);
-                    } else {
-                        println!("{}: {}", record.line_number, record.raw);
+                    if search::matches_query(&query, &record.raw, config.ignore_case) {
+                        if is_directory {
+                            println!("{}:{}: {}", file.display(), record.line_number, record.raw);
+                        } else {
+                            println!("{}: {}", record.line_number, record.raw);
+                        }
                     }
                 }
             }
@@ -45,9 +42,8 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
                 return Err("show requires a file path".into());
             }
 
-            let records = read_logs(path)?;
-
-            for record in records {
+            for record in log::stream_logs(path)? {
+                let record = record?;
                 println!("{}: {}", record.line_number, record.raw);
             }
         }

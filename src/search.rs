@@ -24,6 +24,14 @@ pub fn search_case_insensitive<'a>(query: &str, records: &'a Vec<LogRecord>) -> 
 
     results
 }
+
+pub fn matches_query(query: &str, text: &str, ignore_case: bool) -> bool {
+    if ignore_case {
+        text.to_lowercase().contains(&query.to_lowercase())
+    } else {
+        text.contains(query)
+    }
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -86,5 +94,17 @@ mod tests {
         assert_eq!(results.len(), 2);
         assert_eq!(results[0].raw, "Rust:");
         assert_eq!(results[1].raw, "Trust me.");
+    }
+
+    #[test]
+    fn matches_query_case_sensitive() {
+        assert!(matches_query("error", "error found", false));
+        assert!(!matches_query("error", "ERROR found", false));
+    }
+
+    #[test]
+    fn matches_query_case_insensitive() {
+        assert!(matches_query("error", "ERROR found", true));
+        assert!(matches_query("ERROR", "error found", true));
     }
 }

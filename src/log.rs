@@ -1,6 +1,5 @@
-use std::error::Error;
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::{self, BufRead, BufReader};
 use std::path::Path;
 
 pub struct LogRecord {
@@ -8,22 +7,16 @@ pub struct LogRecord {
     pub raw: String,
 }
 
-pub fn read_logs(file_path: &Path) -> Result<Vec<LogRecord>, Box<dyn Error>> {
+pub fn stream_logs(file_path: &Path) -> io::Result<impl Iterator<Item = io::Result<LogRecord>>> {
     let file = File::open(file_path)?;
     let reader = BufReader::new(file);
 
-    let mut records = Vec::new();
-
-    for (index, line) in reader.lines().enumerate() {
-        let line = line?;
-
-        let record = LogRecord {
+    let records = reader.lines().enumerate().map(|(index, line)| {
+        line.map(|raw| LogRecord {
             line_number: index + 1,
-            raw: line,
-        };
-
-        records.push(record);
-    }
+            raw,
+        })
+    });
 
     Ok(records)
 }
@@ -55,7 +48,10 @@ mod tests {
 
         fs::write(&path, "first line\nsecond line\nthird line\n").unwrap();
 
-        let records = read_logs(&path).unwrap();
+        let records = stream_logs(&path)
+            .unwrap()
+            .collect::<io::Result<Vec<_>>>()
+            .unwrap();
 
         assert_eq!(records.len(), 3);
 
@@ -77,7 +73,10 @@ mod tests {
 
         fs::write(&path, "").unwrap();
 
-        let records = read_logs(&path).unwrap();
+        let records = stream_logs(&path)
+            .unwrap()
+            .collect::<io::Result<Vec<_>>>()
+            .unwrap();
 
         assert!(records.is_empty());
 
@@ -88,7 +87,8 @@ mod tests {
     fn read_nonexistent_file() {
         let path = temp_path("nonexistent");
 
-        let result = read_logs(&path);
+        let result = stream_logs(&path);
+
         assert!(result.is_err());
     }
 }
