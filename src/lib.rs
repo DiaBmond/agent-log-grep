@@ -8,8 +8,6 @@ use files::collect_files;
 use std::error::Error;
 use std::path::Path;
 
-pub use search::{search, search_case_insensitive};
-
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     match config.command {
         Command::Search { query, file_path } => {
